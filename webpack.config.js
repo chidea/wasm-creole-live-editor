@@ -13,8 +13,8 @@ module.exports = (env, argv) => {
     entry: './bootstrap.js',
     output: {
       path: distPath,
-      filename: "todomvc.js",
-      webassemblyModuleFilename: "todomvc.wasm"
+      filename: "creole-live-editor.js",
+      webassemblyModuleFilename: "creole-live-editor.wasm"
     },
     module: {
       rules: [

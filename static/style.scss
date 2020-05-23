@@ -1,5 +1,20 @@
-$background: #f5f5f5;
+$background: #fff;
 
 body {
   background: $background;
+}
+
+.creole-live-editor--wrapper {
+  display:flex;
+}
+
+.creole-live-editor--textarea {
+  width: 100%;
+  min-height: 100px;
+}
+
+.creole-live-editor--preview {
+  width: 100%;
+  background: #eee;
+  border: 1px solid #999;
 }

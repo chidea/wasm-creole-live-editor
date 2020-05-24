@@ -18,3 +18,9 @@ pub fn run_app() -> Result<(), JsValue> {
     yew::start_app::<app::App>();
     Ok(())
 }
+
+pub use crate::cle::CreoleLiveEditor;
+
+pub mod prelude {
+    pub use crate::CreoleLiveEditor;
+}

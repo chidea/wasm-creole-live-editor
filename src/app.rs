@@ -13,14 +13,23 @@ use {
     },
 };
 
-pub struct App;
+pub struct App{
+    saved_value: String,
+}
 
 impl Component for App {
     type Message = ();
     type Properties = ();
 
     fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
-        Self
+        let storage = StorageService::new(Area::Local).unwrap();
+        let key = CreoleLiveEditor::get_save_key("editor1");
+        let saved_value = match storage.restore(&key) {
+            Ok(v) => v,
+            _ => String::new()
+        };
+
+        Self { saved_value }
     }
 
     fn change(&mut self, _: Self::Properties) -> ShouldRender {
@@ -32,7 +41,7 @@ impl Component for App {
     }
 
     fn view(&self) -> Html {
-        let value = "== WASM Creole Live editor
+        let value = if self.saved_value == "" {"== WASM Creole Live editor
 ----
 === headings
 == h1
@@ -54,7 +63,7 @@ linebreak1\\\\linebreak2
 ## b
 ### c
 ----
-";
+"} else { &self.saved_value };
 
         let preview_value = "== Non-editable preview
 editable=false option makes it draw only its preview from given value.

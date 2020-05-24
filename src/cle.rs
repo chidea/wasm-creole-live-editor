@@ -12,7 +12,7 @@ use {
     },
 };
 
-const KEY: &str = "yew.wasm-creole-live-editor.value";
+pub const KEY: &str = "yew.wasm-creole-live-editor.value";
 
 pub struct CreoleLiveEditor {
     link: ComponentLink<Self>,
@@ -24,7 +24,7 @@ pub struct CreoleLiveEditor {
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct State {
-    parsed: Vec<Creole>,
+    parsed: Vec<Creole<String>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Properties)]
@@ -45,7 +45,11 @@ pub enum Msg {
     Edit(String),
     Nope,
 }
-
+impl CreoleLiveEditor {
+    pub fn get_save_key(name: &str) -> String {
+        format!("{}.{}", KEY, name)
+    }
+}
 impl Component for CreoleLiveEditor {
     type Message = Msg;
     type Properties = Props;
@@ -53,7 +57,7 @@ impl Component for CreoleLiveEditor {
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         let storage = StorageService::new(Area::Local).unwrap();
         let key = if props.name != "" {
-            format!("{}.{}", KEY, props.name)
+            Self::get_save_key(&props.name)
         } else {
             String::new()
         };
@@ -153,7 +157,7 @@ impl CreoleLiveEditor {
 }
 
 impl State {
-    fn render_creole(c: &Creole) -> VNode {
+    fn render_creole(c: &Creole<String>) -> VNode {
         match &c {
             Creole::Bold(b) => html! {<b>{b}</b>},
             Creole::Italic(b) => html! {<i>{b}</i>},

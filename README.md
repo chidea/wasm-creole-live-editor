@@ -1,21 +1,32 @@
-[![Netlify Status](https://api.netlify.com/api/v1/badges/5ba03ba7-ff8b-4c54-94e7-cd5fd76a6737/deploy-status)](https://app.netlify.com/sites/yew-todomvc/deploys)
-
 ## About
 
-This template shows how to create a web app using Yew and wasm-pack. 
+[WebASseMbly(WASM)](https://webassembly.org) and [Yew](https://yew.rs) based [WikiCreole](http://wikicreole.org) live editor
 
-## 🚴 Usage
+### Features
 
-### 🛠️ Build
+- WASM-fast live HTML preview
+- Cross-platform installable Progressive Web Application(PWA)
+ - Automatic updates on every startups
+- Autosave
+- Hackable Javascript links (raw <a> tag)
+
+### Web preview
+
+[On Github Pages](https://chidea.github.io)
+
+### Dependencies
 
 When building for the first time, ensure to install dependencies first.
 
 ```
+npm i -g yarn
 yarn install
 ```
 
+### 🛠️ Build
+
 ```
-yarn run build
+yarn build
 ```
 
 ### 🔬 Serve locally

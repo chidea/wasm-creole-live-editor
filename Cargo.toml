@@ -7,17 +7,22 @@ edition = "2018"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[features]
+default=["wee_alloc"]
+
 [dependencies]
-log = "0.4"
-strum = "0"
-strum_macros = "0"
+# log = { version = "0", optional = true }
+# strum = "0"
+# strum_macros = "0"
 serde = { version = "1", features = ["derive"] }
 wasm-bindgen = "0"
-wasm-logger = "0"
+# wasm-logger = "0"
+console_log = { version = "0", optional = true }
 wee_alloc = { version = "0", optional = true }
 yew = "0"
-anyhow = "1"
-creole-nom = "0"
+# anyhow = "1"
+#creole-nom = "0"
+creole-nom = { path = "../creole-nom" }
 
 [dev-dependencies]
 wasm-bindgen-test = "0"
@@ -26,4 +31,7 @@ wasm-bindgen-test = "0"
 version = "0"
 features = [
   'KeyboardEvent',
+  # 'Navigator',
+  # 'ServiceWorkerContainer',
+  # 'Performance',
 ]

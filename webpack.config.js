@@ -33,6 +33,7 @@ module.exports = (env, argv) => {
         { from: './static', to: distPath }
       ]),
       new WasmPackPlugin({
+        args: "--log-level warn",
         crateDirectory: ".",
         extraArgs: "--no-typescript",
       })

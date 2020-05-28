@@ -1,15 +1,13 @@
 use {
-    anyhow::{anyhow, Error},
     creole_nom::prelude::*,
-    log::*,
+    // log::*,
     serde::{Deserialize, Serialize},
-    strum::IntoEnumIterator,
-    strum_macros::{EnumIter, ToString},
     yew::{
         prelude::*,
         services::storage::{Area, StorageService},
         virtual_dom::VNode,
     },
+    // web_sys::{Performance, window, },
 };
 
 pub const KEY: &str = "yew.wasm-creole-live-editor.value";
@@ -20,65 +18,69 @@ pub struct CreoleLiveEditor {
     storage: StorageService,
     state: State,
     props: Props,
+    // #[cfg(feature = "console_log")]
+    // performance: Performance,
 }
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct State {
-    parsed: Vec<Creole<String>>,
+    parsed: Creoles,
+    // /// now as f64 for performance timer
+    // now: f64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Properties)]
 pub struct Props {
-    #[prop_or_default()]
     /// used for auto save. leave it default, blank, unspecified to disable autosave.
+    #[prop_or_default]
     pub name: String,
     #[prop_or_default]
     pub value: String,
-    #[prop_or(true)]
     /// by default it's true thus shows textarea as editor. When it's set to false, it's preview-only.
+    #[prop_or(true)]
     pub editable: bool,
-    #[prop_or_default]
-    pub style: String,
+    /// editor should be autofocused
+    #[prop_or(true)]
+    pub autofocus: bool,
 }
 
 pub enum Msg {
     Edit(String),
     Nope,
 }
+
 impl CreoleLiveEditor {
     pub fn get_save_key(name: &str) -> String {
         format!("{}.{}", KEY, name)
     }
 }
+
 impl Component for CreoleLiveEditor {
     type Message = Msg;
     type Properties = Props;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         let storage = StorageService::new(Area::Local).unwrap();
+        // let performance = window().unwrap().performance().unwrap();
         let key = if props.name != "" {
             Self::get_save_key(&props.name)
         } else {
             String::new()
         };
         let props = {
-            if key != "" && props.value == "" && props.editable {
+            if key != "" && props.value == "" {
                 match storage.restore(&key) {
-                    Ok(p) => Props::builder().value(p).build(),
-                    _ => Props::builder().build(),
+                    Ok(p) => Props{ value:p, ..props }, // Props::builder().value(p).editable(props.editable).autofocus(props.autofocus).build(),
+                    _ => props, //Props::builder().editable(props.editable).autofocus(props.autofocus).build(),
                 }
-            } else {
-                props
-            }
+            } else { props }
         };
         let state = if props.value == "" {
             State::default()
         } else {
             State {
-                parsed: match creoles(&props.value) {
-                    Ok((_, v)) => v,
-                    _ => vec![],
-                },
+                parsed: props.value.parse().unwrap(),
+                // now : performance.now(),
                 ..Default::default()
             }
         };
@@ -88,8 +90,16 @@ impl Component for CreoleLiveEditor {
             storage,
             key,
             state,
+            // performance,
         }
     }
+
+    // fn rendered(&mut self, first_render: bool) {
+        // let dt = self.performance.now() - self.state.now;
+        // let render_type = if first_render { "first " } else { "" };
+        // #[cfg(all(feature = "console_log", feature = "performance"))]
+        // info!("{}render done for : {}ms", render_type, dt);
+    // }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         let p = self.props.clone();
@@ -106,17 +116,13 @@ impl Component for CreoleLiveEditor {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::Edit(val) => {
-                if !self.props.editable {
-                    return false;
-                }
+                // if !self.props.editable {
+                //     return false;
+                // }
+                // self.state.now = self.performance.now();
 
                 self.props.value = val;
-                match creoles(&self.props.value) {
-                    Ok((_, v)) => {
-                        self.state.parsed = v;
-                    }
-                    _ => (),
-                }
+                self.state.parsed = creoles(&self.props.value);
                 if self.key != "" {
                     self.storage.store(&self.key, Ok(self.props.value.clone()));
                 }
@@ -127,11 +133,15 @@ impl Component for CreoleLiveEditor {
     }
 
     fn view(&self) -> Html {
-        html! {
-        <div class="creole-live-editor--wrapper">
-          { self.view_input() }
-          { self.view_preview() }
-        </div> }
+        if self.props.editable {
+            html! {
+            <div class="creole-live-editor--wrapper">
+                { self.view_input() }
+                { self.view_preview() }
+            </div> }
+        }else {
+            self.view_preview()
+        }
     }
 }
 
@@ -142,8 +152,9 @@ impl CreoleLiveEditor {
         }
         html! {
             <textarea class="creole-live-editor--textarea"
-                  value=&self.props.value // propagates from parent value property
-                  oninput=self.link.callback(|e: InputData| Msg::Edit(e.value)) />
+                autofocus=self.props.autofocus
+                value=&self.props.value // propagates from parent value property
+                oninput=self.link.callback(|e: InputData| Msg::Edit(e.value)) />
         }
     }
 
@@ -157,7 +168,7 @@ impl CreoleLiveEditor {
 }
 
 impl State {
-    fn render_creole(c: &Creole<String>) -> VNode {
+    fn render_creole(c: &Creole) -> VNode {
         match &c {
             Creole::Bold(b) => html! {<b>{b}</b>},
             Creole::Italic(b) => html! {<i>{b}</i>},
@@ -168,14 +179,14 @@ impl State {
                 2 => html! {<ul><ul><ul><li>{b}</li></ul></ul></ul>},
                 3 => html! {<ul><ul><ul><ul><li>{b}</li></ul></ul></ul></ul>},
                 _ => html! {<ul><ul><ul><ul><ul><li>{b}</li></ul></ul></ul></ul></ul>},
-            },
+            }
             Creole::NumberedList(i, b) => match i {
                 0 => html! {<ol><li>{b}</li></ol>},
                 1 => html! {<ol><ol><li>{b}</li></ol></ol>},
                 2 => html! {<ol><ol><ol><li>{b}</li></ol></ol></ol>},
                 3 => html! {<ol><ol><ol><ol><li>{b}</li></ol></ol></ol></ol>},
                 _ => html! {<ol><ol><ol><ol><ol><li>{b}</li></ol></ol></ol></ol></ol>},
-            },
+            }
             Creole::Heading(i, b) => match i {
                 0 => html! {<h1>{b}</h1>},
                 1 => html! {<h2>{b}</h2>},
@@ -183,11 +194,20 @@ impl State {
                 3 => html! {<h4>{b}</h4>},
                 4 => html! {<h5>{b}</h5>},
                 _ => html! {<h6>{b}</h6>},
-            },
+            }
             Creole::HorizontalLine => html! {<hr />},
             Creole::Linebreak => html! {<br />},
-            Creole::Link(a, b) => html! {<a href=a.as_str()>{b}</a>},
-            _ => html! {},
+            Creole::Link(link, name) => {
+                let link = link.as_str();
+                let name = if name.is_empty() { link } else { &name };
+                html! {<a href=link>{name}</a>}
+            }
+            Creole::Image(link, name) => {
+                let (img, label) = (html!{<img src=link.as_str() />}, name.as_str());
+                if label.is_empty() { img }
+                else { html!{<div class="creole-live-editor--img-wrapper">{img}<br /><span>{label}</span></div>} }
+            }
+            _ => html! {}
         }
     }
     fn render_creoles_to_html(&self) -> VNode {

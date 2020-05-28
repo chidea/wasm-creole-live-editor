@@ -1,27 +1,24 @@
 use {
     crate::cle::CreoleLiveEditor,
-    anyhow::{anyhow, Error},
-    creole_nom::prelude::*,
-    log::*,
-    serde::{Deserialize, Serialize},
-    strum::IntoEnumIterator,
-    strum_macros::{EnumIter, ToString},
     yew::{
         prelude::*,
         services::storage::{Area, StorageService},
-        virtual_dom::VNode,
     },
 };
 
 pub struct App{
+    // link: ComponentLink<Self>,
     saved_value: String,
+}
+pub enum Msg{
 }
 
 impl Component for App {
-    type Message = ();
+    type Message = Msg;
     type Properties = ();
 
-    fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
+    fn create(_: Self::Properties, _link: ComponentLink<Self>) -> Self {
+        // web_sys::window().unwrap().navigator().service_worker().register("sw.js");
         let storage = StorageService::new(Area::Local).unwrap();
         let key = CreoleLiveEditor::get_save_key("editor1");
         let saved_value = match storage.restore(&key) {
@@ -29,7 +26,7 @@ impl Component for App {
             _ => String::new()
         };
 
-        Self { saved_value }
+        Self { /* link,  */saved_value, }
     }
 
     fn change(&mut self, _: Self::Properties) -> ShouldRender {
@@ -53,31 +50,35 @@ impl Component for App {
 
 linebreak1\\\\linebreak2
 ----
-== list
+=== unordered list
 * a
 ** b
 *** c
 ----
-== numbered list
+=== ordered list
 # a
 ## b
 ### c
 ----
-"} else { &self.saved_value };
+=== images
+{{https://www.w3schools.com/html/w3schools.jpg}} 
+{{https://www.w3schools.com/html/w3schools.jpg|w3schools}}
+----
+=== links
+[[https://www.w3schools.com/]]
 
-        let preview_value = "== Non-editable preview
-editable=false option makes it draw only its preview from given value.
+[[javascript:alert('hi')|alert me \"hi\"]]
 
-Also, it's auto-save feature gets disabled.";
+[[/|reload to test autosave]]"} else { &self.saved_value };
 
         html! { <>
             <div class="wrapper">
-                <h1>{"WASM Creole Live Editor example"}</h1>
+                <h2>{"WASM Creole Live Editor example"}</h2>
                 <CreoleLiveEditor name="editor1" value=value />
             </div>
             <div class="wrapper">
-                <h1>{"Preview-only mode"}</h1>
-                <CreoleLiveEditor value=preview_value editable=false />
+                <h2>{"Preview-only mode (last saved content of editor above)"}</h2>
+                <CreoleLiveEditor name="editor1" editable=false />
             </div>
         </>}
     }

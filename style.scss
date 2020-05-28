@@ -1,0 +1,32 @@
+$background: #fff;
+
+body {
+  background: $background;
+}
+
+.creole-live-editor--wrapper {
+  display:flex;
+  flex-wrap: nowrap;
+  .creole-live-editor--preview {
+    width: 50%;
+  }
+}
+.creole-live-editor--textarea {
+  width: 50%;
+}
+
+.creole-live-editor--preview {
+  background: #eee;
+  border: 1px solid #999;
+  overflow: hidden;
+}
+.creole-live-editor--img-wrapper {
+  display:inline-block;
+}
+
+.install-banner {
+  align-content: center;
+  display: none;
+  justify-content: center;
+  width: 100%;
+}

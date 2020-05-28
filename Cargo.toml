@@ -21,8 +21,8 @@ console_log = { version = "0", optional = true }
 wee_alloc = { version = "0", optional = true }
 yew = "0"
 # anyhow = "1"
-#creole-nom = "0"
-creole-nom = { path = "../creole-nom" }
+creole-nom = "0"
+# creole-nom = { path = "../creole-nom" }
 
 [dev-dependencies]
 wasm-bindgen-test = "0"

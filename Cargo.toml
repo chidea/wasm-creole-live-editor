@@ -4,42 +4,25 @@ version = "0.1.0"
 authors = ["chidea"]
 edition = "2021"
 
-# [lib]
-# crate-type = ["cdylib", "rlib"]
-
-# [features]
-# default=["wee_alloc"]
-
 [dependencies]
-# strum = "0"
-# strum_macros = "0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 wasm-bindgen = "0"
-# wee_alloc = { version = "0", optional = true }
 wee_alloc = { version = "0" }
-# yew = { path="../yew/yew"}
-# yew = { git = "https://github.com/yewstack/yew", features = ["csr"] }
-# yew-router = { git = "https://github.com/yewstack/yew" }
 
 # perseus = { version = "0.3", features = [ "hydrate" ] }
 # perseus-size-opt = "0"
 # sycamore = { version = "0.7" }
 sycamore = { version = "0.8.0-beta.6", features= [ "suspense" ] }
-# sycamore = { git = "https://github.com/sycamore-rs/sycamore", rev = "6860e2bf2c1d9511cd43063196a2a7484588b185", features = ["builder"] }
 sycamore-router = "0.8.0-beta.6"
-# anyhow = "1"
 # gloo = "0"
 # gloo-utils = "0"
 gloo-timers = { version = "0", features = [ "futures" ] }
 # reqwasm = "0"
 
-# creole-nom = "0"
-creole-nom = { path = "../creole-nom" }
+creole-nom = "1"
 
-# log = { version = "0", optional = true }
 # wasm-logger = "0"
-# console_log = { version = "0", optional = true }
 log = "0"
 console_error_panic_hook = "0"
 console_log = "0"

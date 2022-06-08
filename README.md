@@ -1,6 +1,6 @@
 ## About
 
-[WebASseMbly(WASM)](https://webassembly.org) and [Yew](https://yew.rs) based [WikiCreole](http://wikicreole.org) live editor
+[WikiCreole](http://wikicreole.org) editor with live preview based on [WebASseMbly(WASM)](https://webassembly.org) over [Sycamore](https://sycamore-rs.netlify.app)
 
 ### Features
 
@@ -19,20 +19,20 @@
 When building for the first time, ensure to install dependencies first.
 
 ```
-npm i -g yarn
-yarn install
+rustup target add wasm32-unknown-unknown
+cargo install --locked trunk
 ```
 
-### 🛠️ Build
+### 🔬 Serve locally for test (on http://localhost:8080)
 
 ```
-yarn build
+trunk serve
 ```
 
-### 🔬 Serve locally
+### 🛠️ Build for production
 
 ```
-yarn run start:dev
+trunk build --release
 ```
 
 

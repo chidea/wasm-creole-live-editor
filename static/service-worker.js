@@ -1,7 +1,6 @@
 var cacheName = 'chideas-pwaa-v0.1.0';
 var files = [
   '/',
-  '1.creole-live-editor.js',
   'creole-live-editor.js',
   'creole-live-editor.wasm'
 ];

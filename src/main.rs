@@ -8,7 +8,7 @@ use js_sys::Date;
 use sycamore::{builder::prelude::*, futures::spawn_local_scoped, prelude::*};
 use sycamore_router::{HistoryIntegration, Router};
 use wasm_bindgen::JsCast;
-use web_sys::{Event, HtmlTextAreaElement, InputEvent};
+use web_sys::{Event, HtmlTextAreaElement, InputEvent, HtmlInputElement, };
 
 use creole_nom::prelude::*;
 
@@ -146,71 +146,7 @@ struct CreoleEditorProps<'a> {
     // parsed: &'a Signal<Vec<ICreole<'a>>>,
     path: String,
 }
-
-#[component]
-fn CreoleEditor<'a, G: Html>(cx: Scope<'a>, props: CreoleEditorProps<'a>) -> View<G> {
-    let node_ref = create_node_ref(cx);
-    let window = web_sys::window().expect("no global `window` exists");
-    let local_storage = window
-        .local_storage()
-        .unwrap()
-        .expect("user has not enabled localStorage");
-
-    let last_update = create_signal(cx, 0.);
-    let updated = create_signal(cx, false);
-
-    {
-        spawn_local_scoped(cx, async move {
-            if !props.path.is_empty() {
-              if let Ok(Some(v)) = local_storage.get_item(&props.path){
-                props.value.set(v.into_boxed_str());
-              }
-            }
-            loop {
-                TimeoutFuture::new(500).await;
-
-                let sec_ago = Date::now() - 1000.;
-                if *updated.get() || *last_update.get() >= sec_ago {
-                    continue;
-                }
-                let node = node_ref.get::<DomNode>();
-                let e: HtmlTextAreaElement = node.unchecked_into();
-
-                let perf = window.performance();
-                if let Some(perf) = &perf {
-                    perf.clear_marks();
-                    perf.clear_measures();
-                    perf.mark("s1").unwrap_or(());
-                }
-                let s = e.value();
-                // debug!("input : {}", s);
-                if !props.path.is_empty() {
-                  local_storage.set_item(&props.path, &s).unwrap_or(());
-                }
-                
-                props.value.set(s.into_boxed_str());
-
-                if let Some(perf) = &perf {
-                    perf.mark("e1").unwrap_or(());
-                    measure(perf, "creole input update", "s1", "e1");
-                }
-                updated.set(true);
-                last_update.set(Date::now());
-            }
-        });
-    }
-
-    let on_input = |e: Event| {
-        let e: InputEvent = e.unchecked_into();
-        updated.set(false);
-        debug!("typed : {:?}", e.data());
-    };
-
-    view! { cx,
-      div(class="editor") {
-        h2 { "Editor" }
-        textarea(ref=node_ref, /* bind:value=props.value, */ on:input=on_input) {
-          "== [[https://webassembly.org|WASM]] [[http://www.wikicreole.org|Creole]] //Live// Editor ([[https://github.com/chidea/wasm-creole-live-editor|github]])
+const HELP : &'static str = "== [[https://webassembly.org|WASM]] [[http://www.wikicreole.org|Creole]] //Live// Editor ([[https://github.com/chidea/wasm-creole-live-editor|github]])
 ----
 === text styles
 //italic// and **bold**.
@@ -289,10 +225,81 @@ Force\\\\linebreak
 == [[Nowiki]]:
 //**don't** format//
 }}}
-"
+";
+#[component]
+fn CreoleEditor<'a, G: Html>(cx: Scope<'a>, props: CreoleEditorProps<'a>) -> View<G> {
+    let node_ref = create_node_ref(cx);
+    let window = web_sys::window().expect("no global `window` exists");
+    let local_storage = window
+        .local_storage()
+        .unwrap()
+        .expect("user has not enabled localStorage");
+
+    let last_update = create_signal(cx, 0.);
+    let updated = create_signal(cx, false);
+
+    let default_value = if !props.path.is_empty() {
+        if let Ok(Some(v)) = local_storage.get_item(&props.path){
+          v
+        } else if props.path == "home" { // no user note for home page
+          String::from(HELP)
+        } else { String::new() }
+    } else {
+      String::new()
+    }.into_boxed_str();
+
+    {
+        spawn_local_scoped(cx, async move {
+            
+            loop {
+                TimeoutFuture::new(500).await;
+
+                let sec_ago = Date::now() - 1000.;
+                if *updated.get() || *last_update.get() >= sec_ago {
+                    continue;
+                }
+                let node = node_ref.get::<DomNode>();
+                let e: HtmlTextAreaElement = node.unchecked_into();
+
+                let perf = window.performance();
+                if let Some(perf) = &perf {
+                    perf.clear_marks();
+                    perf.clear_measures();
+                    perf.mark("s1").unwrap_or(());
+                }
+                let s = e.value();
+                // debug!("input : {}", s);
+                if !props.path.is_empty() {
+                  local_storage.set_item(&props.path, &s).unwrap_or(());
+                }
+                
+                props.value.set(s.into_boxed_str());
+
+                if let Some(perf) = &perf {
+                    perf.mark("e1").unwrap_or(());
+                    measure(perf, "creole input update", "s1", "e1");
+                }
+                updated.set(true);
+                last_update.set(Date::now());
+            }
+        });
+    }
+
+    let on_input = |e: Event| {
+        let e: InputEvent = e.unchecked_into();
+        updated.set(false);
+        debug!("typed : {:?}", e.data());
+    };
+
+    view! { cx,
+      div(class="editor") {
+        h2 { "Editor" }
+        textarea(ref=node_ref, on:input=on_input) {
+          (default_value)
         }
       }
     }
+  
 }
 
 #[derive(Prop)]
@@ -303,7 +310,21 @@ struct CreoleProps {
 
 #[component]
 fn Creole<G: Html>(cx: Scope, props: CreoleProps) -> View<G> {
-    let value = create_signal(cx, String::new().into_boxed_str());
+    let value = create_signal(cx, 
+     if props.path == "help" {
+      String::from(HELP)
+    } else { 
+      let window = web_sys::window().expect("no global `window` exists");
+      let local_storage = window
+          .local_storage()
+          .unwrap()
+          .expect("user has not enabled localStorage");
+      if let Ok(Some(v)) = local_storage.get_item(&props.path){
+        v
+      } else { String::new() }
+    }.into_boxed_str());
+    
+
     if props.editable {
         view! { cx,
           div(class="wrapper") {
@@ -323,33 +344,89 @@ fn Creole<G: Html>(cx: Scope, props: CreoleProps) -> View<G> {
 
 #[component]
 fn App<G: Html>(cx: Scope) -> View<G> {
+    let wiki_path_node_ref = create_node_ref(cx);
+
+    let wiki_path = create_signal(cx, String::new());
+    let on_edit = |_| {
+      sycamore_router::navigate(&format!("/e/{}", *wiki_path.get()))
+    };
+    let on_view = |_| sycamore_router::navigate(&format!("/w/{}", *wiki_path.get()));
+    let on_del = |_| sycamore_router::navigate(&format!("/d/{}", *wiki_path.get()));
+
     view! { cx,
       nav {
-        a(href="/") { ("Home(test editor)") }
-        a(href="/help") { ("Help") }
+        a(href="/") { button{ ("Home(=Edit 'home')") } }
+        a(href="/help") { button{ ("Help") } }
+        input(type="text", bind:value=wiki_path, ref=wiki_path_node_ref) { }
+        button(on:click=on_edit){ ("Edit") }
+        button(on:click=on_view){ ("View") }
+        button(on:click=on_del){ ("Delete") }
       }
       Router {
         integration: HistoryIntegration::new(),
-        view: |cx, route: &ReadSignal<AppRoutes>| {
+        view: move |cx, route: &ReadSignal<AppRoutes>| {
+          use AppRoutes::*;
+          match route.get().as_ref() {
+            Wiki{path} | WikiEdit{path} | WikiDelete{path} => {
+              let wiki_path_node = wiki_path_node_ref.get::<DomNode>();
+              let e: HtmlInputElement = wiki_path_node.unchecked_into();
+              e.set_value(&path.join("/"));
+            }
+            _ => ()
+          }
           view! { cx,
             div(class="app") {
               (match route.get().as_ref() {
-                AppRoutes::Index => {
+                Index => {
+                  let p = String::from("home");
+                  // wiki_path.set(p.clone());
                   view! { cx,
-                    Creole{ editable: true, path: String::from("home") }
+                    Creole{ editable: true, path: p }
                   }
                 },
-                AppRoutes::Help => {
+                Help => {
+                  let p = String::from("help");
+                  // wiki_path.set(p.clone());
                   view! { cx,
-                    Creole { editable: false, path: String::new() }
+                    Creole { editable: false, path: p }
                   }
                 },
-                AppRoutes::Wiki{path} => {
+                Wiki{path} => {
+                  let p = path.join("/");
+                  // wiki_path.set(p.clone());
                   view! { cx,
-                    Creole { editable: false, path: path.join("/") }
+                    Creole { editable: false, path: p }
                   }
                 },
-                AppRoutes::NotFound => view! { cx,
+                WikiEdit{path} => {
+                  let p = path.join("/");
+                  // wiki_path.set(p.clone());
+                  view! { cx,
+                    Creole { editable: true, path: p }
+                  }
+                },
+                WikiDelete{path} => {
+                  let p = path.join("/");
+                  // wiki_path.set(p.clone());
+                  let pp = p.clone();
+                  let on_del_yes = move |_|{
+                    let window = web_sys::window().expect("no global `window` exists");
+                    let local_storage = window
+                        .local_storage()
+                        .unwrap()
+                        .expect("user has not enabled localStorage");
+                    local_storage.remove_item(&pp).unwrap_or(());
+                    sycamore_router::navigate("/");
+                  };
+                  view! { cx,
+                    p {
+                      h2 { "delete?" }
+                      button(on:click=on_del_yes) { ("Yes")}
+                    }
+                    Creole { editable: false, path: p }
+                  }
+                },
+                NotFound => view! { cx,
                   "404 Not Found"
                 },
               })

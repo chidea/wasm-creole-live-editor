@@ -1,5 +1,5 @@
 use {
-    creole_nom::prelude::*,
+    creole_nom::prelude::{Creoles, Creole},
     // log::*,
     serde::{Deserialize, Serialize},
     yew::{
@@ -16,20 +16,21 @@ pub struct CreoleLiveEditor {
     link: ComponentLink<Self>,
     key: String,
     storage: StorageService,
-    state: State,
     props: Props,
+    // state: State,
     // #[cfg(feature = "console_log")]
     // performance: Performance,
+    // parsed: Creoles,
 }
 
-#[derive(Serialize, Deserialize, Default)]
-pub struct State {
-    parsed: Creoles,
-    // /// now as f64 for performance timer
-    // now: f64,
-}
+// #[derive(Serialize, Deserialize, Default)]
+// pub struct State {
+//     parsed: Vec<Creole>,
+//     // /// now as f64 for performance timer
+//     // now: f64,
+// }
 
-#[derive(Serialize, Deserialize, Clone, Properties)]
+#[derive(Serialize, Deserialize, Clone, Properties, PartialEq)]
 pub struct Props {
     /// used for auto save. leave it default, blank, unspecified to disable autosave.
     #[prop_or_default]
@@ -75,21 +76,23 @@ impl Component for CreoleLiveEditor {
                 }
             } else { props }
         };
-        let state = if props.value == "" {
-            State::default()
-        } else {
-            State {
-                parsed: props.value.parse().unwrap(),
-                // now : performance.now(),
-                ..Default::default()
-            }
-        };
+        // let state = if props.value == "" {
+        //     State::default()
+        // } else {
+        //     State {
+        //         parsed: props.value.parse().unwrap(),
+        //         // now : performance.now(),
+        //         ..Default::default()
+        //     }
+        // };
+        // let parsed = props.value.parse().unwrap();
         Self {
             link,
             props,
             storage,
             key,
-            state,
+            // parsed,
+            // state,
             // performance,
         }
     }
@@ -102,15 +105,15 @@ impl Component for CreoleLiveEditor {
     // }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        let p = self.props.clone();
-        self.props = props;
+        let b = self.props != props;
 
-        if self.props.name != p.name {
-            self.key = format!("{}.{}", KEY, self.props.name);
-            return true;
+        if !b {
+            if self.props.name != props.name {
+                self.key = format!("{}.{}", KEY, self.props.name);
+            }
+            self.props = props;
         }
-
-        self.props.value != p.value || self.props.editable != p.editable
+        b
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
@@ -122,14 +125,14 @@ impl Component for CreoleLiveEditor {
                 // self.state.now = self.performance.now();
 
                 self.props.value = val;
-                self.state.parsed = creoles(&self.props.value);
+                // self.parsed = self.props.value.parse().unwrap();
                 if self.key != "" {
                     self.storage.store(&self.key, Ok(self.props.value.clone()));
                 }
+                true
             }
-            Msg::Nope => {}
+            Msg::Nope => {false}
         }
-        true
     }
 
     fn view(&self) -> Html {
@@ -159,15 +162,16 @@ impl CreoleLiveEditor {
     }
 
     fn view_preview(&self) -> Html {
+        let parsed :Creoles = self.props.value.parse().unwrap();
         html! {
             <div class="creole-live-editor--preview">
-                { self.state.render_creoles_to_html() }
+                { for parsed.iter().map(|i| render_creole(i)) }
             </div>
         }
     }
 }
 
-impl State {
+// impl State {
     fn render_creole(c: &Creole) -> VNode {
         match &c {
             Creole::Bold(b) => html! {<b>{b}</b>},
@@ -210,9 +214,4 @@ impl State {
             _ => html! {}
         }
     }
-    fn render_creoles_to_html(&self) -> VNode {
-        html! {
-            { for self.parsed.iter().map(|i| Self::render_creole(i)) }
-        }
-    }
-}
+// }

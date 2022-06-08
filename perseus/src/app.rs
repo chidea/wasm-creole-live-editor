@@ -2,7 +2,7 @@ use {
     crate::cle::CreoleLiveEditor,
     yew::{
         prelude::*,
-        services::storage::{Area, StorageService},
+        // services::storage::{Area, StorageService},
     },
 };
 

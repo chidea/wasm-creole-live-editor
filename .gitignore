@@ -6,3 +6,5 @@ pkg/
 dist/
 wasm-pack.log
 node_modules
+
+.perseus/

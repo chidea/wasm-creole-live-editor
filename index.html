@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="utf-8" />
+        <title>Creole Live Editor with WASM</title>
+        <link rel="manifest" href="/manifest.json">
+        <link data-trunk rel="rust" data-wasm-opt="s" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="application-name" content="WCLE">
+        <meta name="apple-mobile-web-app-title" content="WCLE">
+        <meta name="theme-color" content="#654FF0">
+        <meta name="msapplication-navbutton-color" content="#FF9800">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="msapplication-starturl" content="/index.html">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <script>
+            // register ServiceWorker
+            if ('serviceWorker' in navigator)
+                window.onload = () => {
+                    navigator.serviceWorker
+                            .register('./service-worker.js');
+                }
+        </script>
+        <style>
+          figure {
+            display: inline-block;
+          }
+          .wrapper {
+            display: flex;
+          }
+          .editor, .preview {
+            width: 50%;
+            padding: .5rem;
+          }
+          .editor > textarea {
+            width: 100%;
+            height: calc(100% - 5rem);
+          }
+          table {
+            border-collapse: collapse;
+          }
+          td {
+            border: 1px solid;
+          }
+          ol > li {
+              counter-increment: item;
+          }
+          ol > li:first-child, ol > ol:first-child {
+            counter-reset: item;
+            counter-increment: item;
+          }
+          ol ol > li {
+              display: block;
+          }
+
+          ol ol > li:before {
+              content: counters(item, ".") ". ";
+              margin-left: -20px;
+          }
+        </style>
+    </head>
+    <body>
+        <!-- <section id="installBanner" class="install-banner">
+            <button id="installBtn">Install app</button>
+        </section>
+        <script>
+            let deferredPrompt;
+            window.addEventListener('beforeinstallprompt', event => {
+              let banner = document.querySelector('#installBanner');
+              // Prevent Chrome 67 and earlier from automatically showing the prompt
+              event.preventDefault();
+              // Stash the event so it can be triggered later.
+              deferredPrompt = event;
+              // Attach the install prompt to a user gesture
+              document.querySelector('#installBtn').addEventListener('click', event => {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice
+                  .then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                      console.log('User accepted the A2HS prompt');
+                    } else {
+                      console.log('User dismissed the A2HS prompt');
+                    }
+                    banner.style.display = 'none';
+                    deferredPrompt = null;
+                  });
+              });
+              banner.style.display = 'flex';
+            });
+        </script> -->
+        <!-- <section id="creole-live-editor"></section>
+        <script src="/creole-live-editor.js" defer></script> -->
+        <div id="root"></div>
+    </body>
+</html>

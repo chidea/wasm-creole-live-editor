@@ -8,7 +8,7 @@ use js_sys::Date;
 use sycamore::{builder::prelude::*, futures::spawn_local_scoped, prelude::*};
 use sycamore_router::{HistoryIntegration, Router};
 use wasm_bindgen::JsCast;
-use web_sys::{Event, HtmlTextAreaElement, InputEvent, HtmlInputElement, };
+use web_sys::{Event, HtmlInputElement, HtmlTextAreaElement, InputEvent};
 
 use creole_nom::prelude::*;
 
@@ -33,7 +33,10 @@ impl Default for Theme {
 }
 
 fn measure(perf: &web_sys::Performance, name: &str, s: &str, e: &str) {
-    if perf.measure_with_start_mark_and_end_mark(name, s, e).is_ok() {
+    if perf
+        .measure_with_start_mark_and_end_mark(name, s, e)
+        .is_ok()
+    {
         let m: web_sys::PerformanceMeasure = perf
             .get_entries_by_name_with_entry_type(name, "measure")
             .get(0)
@@ -65,7 +68,9 @@ fn CreoleItem<'a, G: Html>(cx: Scope<'a>, i: ICreole<'a>) -> View<G> {
         ICreole::Italic(t) => view! { cx, i { (format!("{t}")) } },
         ICreole::Text(t) => view! { cx, span { (format!("{t}")) } },
         ICreole::DontFormat(t) => view! { cx, pre { (format!("{t}"))  } },
-        ICreole::Link(href, t) => view! { cx, a(href=format!("{href}"), rel="external") { (format!("{t}")) } },
+        ICreole::Link(href, t) => {
+            view! { cx, a(href=format!("{href}"), rel="external") { (format!("{t}")) } }
+        }
         ICreole::Line(l) => creole_as_node(cx, "p", l),
         ICreole::Image(src, t) => {
             if t.is_empty() {
@@ -239,18 +244,21 @@ fn CreoleEditor<'a, G: Html>(cx: Scope<'a>, props: CreoleEditorProps<'a>) -> Vie
     let updated = create_signal(cx, false);
 
     let default_value = if !props.path.is_empty() {
-        if let Ok(Some(v)) = local_storage.get_item(&props.path){
-          v
-        } else if props.path == "home" { // no user note for home page
-          String::from(HELP)
-        } else { String::new() }
+        if let Ok(Some(v)) = local_storage.get_item(&props.path) {
+            v
+        } else if props.path == "home" {
+            // no user note for home page
+            String::from(HELP)
+        } else {
+            String::new()
+        }
     } else {
-      String::new()
-    }.into_boxed_str();
+        String::new()
+    }
+    .into_boxed_str();
 
     {
         spawn_local_scoped(cx, async move {
-            
             loop {
                 TimeoutFuture::new(500).await;
 
@@ -270,9 +278,9 @@ fn CreoleEditor<'a, G: Html>(cx: Scope<'a>, props: CreoleEditorProps<'a>) -> Vie
                 let s = e.value();
                 // debug!("input : {}", s);
                 if !props.path.is_empty() {
-                  local_storage.set_item(&props.path, &s).unwrap_or(());
+                    local_storage.set_item(&props.path, &s).unwrap_or(());
                 }
-                
+
                 props.value.set(s.into_boxed_str());
 
                 if let Some(perf) = &perf {
@@ -299,7 +307,6 @@ fn CreoleEditor<'a, G: Html>(cx: Scope<'a>, props: CreoleEditorProps<'a>) -> Vie
         }
       }
     }
-  
 }
 
 #[derive(Prop)]
@@ -310,20 +317,24 @@ struct CreoleProps {
 
 #[component]
 fn Creole<G: Html>(cx: Scope, props: CreoleProps) -> View<G> {
-    let value = create_signal(cx, 
-     if props.path == "help" {
-      String::from(HELP)
-    } else { 
-      let window = web_sys::window().expect("no global `window` exists");
-      let local_storage = window
-          .local_storage()
-          .unwrap()
-          .expect("user has not enabled localStorage");
-      if let Ok(Some(v)) = local_storage.get_item(&props.path){
-        v
-      } else { String::new() }
-    }.into_boxed_str());
-    
+    let value = create_signal(
+        cx,
+        if props.path == "help" {
+            String::from(HELP)
+        } else {
+            let window = web_sys::window().expect("no global `window` exists");
+            let local_storage = window
+                .local_storage()
+                .unwrap()
+                .expect("user has not enabled localStorage");
+            if let Ok(Some(v)) = local_storage.get_item(&props.path) {
+                v
+            } else {
+                String::new()
+            }
+        }
+        .into_boxed_str(),
+    );
 
     if props.editable {
         view! { cx,
@@ -347,9 +358,7 @@ fn App<G: Html>(cx: Scope) -> View<G> {
     let wiki_path_node_ref = create_node_ref(cx);
 
     let wiki_path = create_signal(cx, String::new());
-    let on_edit = |_| {
-      sycamore_router::navigate(&format!("/e/{}", *wiki_path.get()))
-    };
+    let on_edit = |_| sycamore_router::navigate(&format!("/e/{}", *wiki_path.get()));
     let on_view = |_| sycamore_router::navigate(&format!("/w/{}", *wiki_path.get()));
     let on_del = |_| sycamore_router::navigate(&format!("/d/{}", *wiki_path.get()));
 

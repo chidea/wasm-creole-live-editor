@@ -65,7 +65,7 @@ fn CreoleItem<'a, G: Html>(cx: Scope<'a>, i: ICreole<'a>) -> View<G> {
         ICreole::Italic(t) => view! { cx, i { (format!("{t}")) } },
         ICreole::Text(t) => view! { cx, span { (format!("{t}")) } },
         ICreole::DontFormat(t) => view! { cx, pre { (format!("{t}"))  } },
-        ICreole::Link(href, t) => view! { cx, a(href=format!("{href}")) { (format!("{t}")) } },
+        ICreole::Link(href, t) => view! { cx, a(href=format!("{href}"), rel="external") { (format!("{t}")) } },
         ICreole::Line(l) => creole_as_node(cx, "p", l),
         ICreole::Image(src, t) => {
             if t.is_empty() {

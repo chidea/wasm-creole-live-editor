@@ -32,16 +32,8 @@ impl Default for Theme {
     }
 }
 
-fn child<G: Html>(Comp: &dyn Fn(Scope, ()) -> View<G>) -> impl Fn(Scope, ()) -> View<G> + '_ {
-    move |cx, _| {
-        view! { cx,
-          Comp {}
-        }
-    }
-}
-
 fn measure(perf: &web_sys::Performance, name: &str, s: &str, e: &str) {
-    if let Ok(_) = perf.measure_with_start_mark_and_end_mark(name, s, e) {
+    if perf.measure_with_start_mark_and_end_mark(name, s, e).is_ok() {
         let m: web_sys::PerformanceMeasure = perf
             .get_entries_by_name_with_entry_type(name, "measure")
             .get(0)
@@ -95,11 +87,7 @@ fn CreoleItem<'a, G: Html>(cx: Scope<'a>, i: ICreole<'a>) -> View<G> {
             t.append_child(head);
             t.append_child(body);
             for c in children {
-                let is_head = if let ICreole::TableHeaderRow(_) = c {
-                    true
-                } else {
-                    false
-                };
+                let is_head = matches!(c, ICreole::TableHeaderRow(_));
                 if let Some(n) = CreoleItem(cx, c).as_node() {
                     if is_head { head } else { body }.append_child(n);
                 }
@@ -115,7 +103,6 @@ fn CreoleItem<'a, G: Html>(cx: Scope<'a>, i: ICreole<'a>) -> View<G> {
         ICreole::BulletList(children) => creole_as_node(cx, "ul", children),
         ICreole::NumberedList(children) => creole_as_node(cx, "ol", children),
         ICreole::ListItem(children) => creole_as_node(cx, "li", children),
-        _ => view! { cx, span },
     }
 }
 
@@ -127,7 +114,7 @@ struct CreolePreviewProps<'a> {
 }
 #[component]
 fn CreolePreview<'a, G: Html>(cx: Scope<'a>, props: CreolePreviewProps<'a>) -> View<G> {
-    let vp = create_memo(cx, move || create_ref(cx, props.value.get().clone()));
+    let vp = create_memo(cx, move || create_ref(cx, props.value.get()));
     let parsed = create_memo(cx, || {
         let window = web_sys::window().expect("no global `window` exists");
         let perf = window.performance();
@@ -157,6 +144,7 @@ fn CreolePreview<'a, G: Html>(cx: Scope<'a>, props: CreolePreviewProps<'a>) -> V
 struct CreoleEditorProps<'a> {
     value: &'a Signal<Box<str>>,
     // parsed: &'a Signal<Vec<ICreole<'a>>>,
+    path: String,
 }
 
 #[component]
@@ -173,6 +161,11 @@ fn CreoleEditor<'a, G: Html>(cx: Scope<'a>, props: CreoleEditorProps<'a>) -> Vie
 
     {
         spawn_local_scoped(cx, async move {
+            if !props.path.is_empty() {
+              if let Ok(Some(v)) = local_storage.get_item(&props.path){
+                props.value.set(v.into_boxed_str());
+              }
+            }
             loop {
                 TimeoutFuture::new(500).await;
 
@@ -191,6 +184,10 @@ fn CreoleEditor<'a, G: Html>(cx: Scope<'a>, props: CreoleEditorProps<'a>) -> Vie
                 }
                 let s = e.value();
                 // debug!("input : {}", s);
+                if !props.path.is_empty() {
+                  local_storage.set_item(&props.path, &s).unwrap_or(());
+                }
+                
                 props.value.set(s.into_boxed_str());
 
                 if let Some(perf) = &perf {
@@ -312,6 +309,7 @@ fn Creole<G: Html>(cx: Scope, props: CreoleProps) -> View<G> {
           div(class="wrapper") {
             CreoleEditor {
               value: value,
+              path: props.path,
             }
             CreolePreview{ value :value }
           }
@@ -337,9 +335,8 @@ fn App<G: Html>(cx: Scope) -> View<G> {
             div(class="app") {
               (match route.get().as_ref() {
                 AppRoutes::Index => {
-                  let editable = create_signal(cx, true);
                   view! { cx,
-                    Creole{ editable: true, path: String::new() }
+                    Creole{ editable: true, path: String::from("home") }
                   }
                 },
                 AppRoutes::Help => {

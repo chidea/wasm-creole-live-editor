@@ -8,7 +8,7 @@ use js_sys::Date;
 use sycamore::{builder::prelude::*, futures::spawn_local_scoped, prelude::*};
 use sycamore_router::{HistoryIntegration, Router};
 use wasm_bindgen::JsCast;
-use web_sys::{Event, /* HtmlInputElement,  */HtmlTextAreaElement, InputEvent};
+use web_sys::{Event, /* HtmlInputElement,  */ HtmlTextAreaElement, InputEvent};
 
 use creole_nom::prelude::*;
 
@@ -74,12 +74,12 @@ fn CreoleItem<'a, G: Html>(cx: Scope<'a>, i: ICreole<'a>) -> View<G> {
         ICreole::Text(t) => view! { cx, span { (format!("{t}")) } },
         ICreole::DontFormat(t) => view! { cx, pre { (format!("{t}"))  } },
         ICreole::Link(href, t) => {
-          if href.starts_with("http://") || href.starts_with("https://") {
-            view! { cx, a(href=href, target="__blank") { (format!("{t}")) } }
-          } else {
-            let on_click = move |_| sycamore_router::navigate(&format!("/w/{}", href));
-            view! { cx, a(href="#", on:click=on_click) { (format!("{t}")) } }
-          }
+            if href.starts_with("http://") || href.starts_with("https://") {
+                view! { cx, a(href=href, target="__blank") { (format!("{t}")) } }
+            } else {
+                let on_click = move |_| sycamore_router::navigate(&format!("/w/{}", href));
+                view! { cx, a(href="#", on:click=on_click) { (format!("{t}")) } }
+            }
         }
         ICreole::Line(l) => creole_as_node(cx, "p", l),
         ICreole::Image(src, t) => {
@@ -161,7 +161,7 @@ struct CreoleEditorProps<'a> {
     // parsed: &'a Signal<Vec<ICreole<'a>>>,
     path: String,
 }
-const HELP : &'static str = "== [[https://webassembly.org|WASM]] [[http://www.wikicreole.org|Creole]] //Live// Editor ([[https://github.com/chidea/wasm-creole-live-editor|github]])
+const HELP : &str = "== [[https://webassembly.org|WASM]] [[http://www.wikicreole.org|Creole]] //Live// Editor ([[https://github.com/chidea/wasm-creole-live-editor|github]])
 ----
 === text styles
 //italic// and **bold**.
@@ -370,7 +370,10 @@ fn App<G: Html>(cx: Scope) -> View<G> {
     let wiki_path_node_ref = create_node_ref(cx);
     let wiki_path = create_signal(cx, String::new());
 
-    let set_wiki_path = |s:String| {wiki_path.set(s.clone()); s};
+    let set_wiki_path = |s: String| {
+        wiki_path.set(s.clone());
+        s
+    };
     let on_edit = |_| sycamore_router::navigate(&format!("/e/{}", *wiki_path.get()));
     let on_view = |_| sycamore_router::navigate(&format!("/w/{}", *wiki_path.get()));
     let on_del = |_| sycamore_router::navigate(&format!("/d/{}", *wiki_path.get()));

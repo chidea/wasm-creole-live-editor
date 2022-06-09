@@ -381,7 +381,7 @@ fn App<G: Html>(cx: Scope) -> View<G> {
     view! { cx,
       nav {
         a(href="#", on:click=|_|sycamore_router::navigate("/")) { button{ ("Home(=Edit 'home')") } }
-        a(href="/help") { button{ ("Help") } }
+        a(href="#", on:click=|_|sycamore_router::navigate("/help")) { button{ ("Help") } }
         input(type="text", bind:value=wiki_path, ref=wiki_path_node_ref) { }
         button(on:click=on_edit){ ("Edit") }
         button(on:click=on_view){ ("View") }

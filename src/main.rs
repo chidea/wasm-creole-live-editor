@@ -8,7 +8,7 @@ use js_sys::Date;
 use sycamore::{builder::prelude::*, futures::spawn_local_scoped, prelude::*};
 use sycamore_router::{HistoryIntegration, Router};
 use wasm_bindgen::JsCast;
-use web_sys::{Event, HtmlInputElement, HtmlTextAreaElement, InputEvent};
+use web_sys::{Event, /* HtmlInputElement,  */HtmlTextAreaElement, InputEvent};
 
 use creole_nom::prelude::*;
 
@@ -60,6 +60,11 @@ fn creole_as_node<'a, G: Html>(cx: Scope<'a>, tag: &str, t: Vec<ICreole<'a>>) ->
     View::new_node(creole_filled(cx, tag, t))
 }
 
+// #[derive(Prop)]
+// struct CreoleItemProps<'a> {
+//     item: &'a ReadSignal<ICreole<'a>>,
+// }
+
 #[component]
 fn CreoleItem<'a, G: Html>(cx: Scope<'a>, i: ICreole<'a>) -> View<G> {
     match i {
@@ -69,7 +74,12 @@ fn CreoleItem<'a, G: Html>(cx: Scope<'a>, i: ICreole<'a>) -> View<G> {
         ICreole::Text(t) => view! { cx, span { (format!("{t}")) } },
         ICreole::DontFormat(t) => view! { cx, pre { (format!("{t}"))  } },
         ICreole::Link(href, t) => {
-            view! { cx, a(href=format!("{href}"), rel="external") { (format!("{t}")) } }
+          if href.starts_with("http://") || href.starts_with("https://") {
+            view! { cx, a(href=href, target="__blank") { (format!("{t}")) } }
+          } else {
+            let on_click = move |_| sycamore_router::navigate(&format!("/w/{}", href));
+            view! { cx, a(href="#", on:click=on_click) { (format!("{t}")) } }
+          }
         }
         ICreole::Line(l) => creole_as_node(cx, "p", l),
         ICreole::Image(src, t) => {
@@ -277,7 +287,9 @@ fn CreoleEditor<'a, G: Html>(cx: Scope<'a>, props: CreoleEditorProps<'a>) -> Vie
                 }
                 let s = e.value();
                 // debug!("input : {}", s);
-                if !props.path.is_empty() {
+                if s.is_empty() {
+                    local_storage.remove_item(&props.path).unwrap_or(());
+                } else if !props.path.is_empty() {
                     local_storage.set_item(&props.path, &s).unwrap_or(());
                 }
 
@@ -356,15 +368,16 @@ fn Creole<G: Html>(cx: Scope, props: CreoleProps) -> View<G> {
 #[component]
 fn App<G: Html>(cx: Scope) -> View<G> {
     let wiki_path_node_ref = create_node_ref(cx);
-
     let wiki_path = create_signal(cx, String::new());
+
+    let set_wiki_path = |s:String| {wiki_path.set(s.clone()); s};
     let on_edit = |_| sycamore_router::navigate(&format!("/e/{}", *wiki_path.get()));
     let on_view = |_| sycamore_router::navigate(&format!("/w/{}", *wiki_path.get()));
     let on_del = |_| sycamore_router::navigate(&format!("/d/{}", *wiki_path.get()));
 
     view! { cx,
       nav {
-        a(href="/") { button{ ("Home(=Edit 'home')") } }
+        a(href="#", on:click=|_|sycamore_router::navigate("/")) { button{ ("Home(=Edit 'home')") } }
         a(href="/help") { button{ ("Help") } }
         input(type="text", bind:value=wiki_path, ref=wiki_path_node_ref) { }
         button(on:click=on_edit){ ("Edit") }
@@ -375,48 +388,32 @@ fn App<G: Html>(cx: Scope) -> View<G> {
         integration: HistoryIntegration::new(),
         view: move |cx, route: &ReadSignal<AppRoutes>| {
           use AppRoutes::*;
-          match route.get().as_ref() {
-            Wiki{path} | WikiEdit{path} | WikiDelete{path} => {
-              let wiki_path_node = wiki_path_node_ref.get::<DomNode>();
-              let e: HtmlInputElement = wiki_path_node.unchecked_into();
-              e.set_value(&path.join("/"));
-            }
-            _ => ()
-          }
           view! { cx,
             div(class="app") {
               (match route.get().as_ref() {
                 Index => {
-                  let p = String::from("home");
-                  // wiki_path.set(p.clone());
                   view! { cx,
-                    Creole{ editable: true, path: p }
+                    Creole{ editable: true, path: set_wiki_path(String::from("home")) }
                   }
                 },
                 Help => {
-                  let p = String::from("help");
-                  // wiki_path.set(p.clone());
                   view! { cx,
-                    Creole { editable: false, path: p }
+                    Creole { editable: false, path: String::from("help") }
                   }
                 },
                 Wiki{path} => {
-                  let p = path.join("/");
-                  // wiki_path.set(p.clone());
                   view! { cx,
-                    Creole { editable: false, path: p }
+                    Creole { editable: false, path: set_wiki_path(path.join("/")) }
                   }
                 },
                 WikiEdit{path} => {
-                  let p = path.join("/");
-                  // wiki_path.set(p.clone());
                   view! { cx,
-                    Creole { editable: true, path: p }
+                    Creole { editable: true, path: set_wiki_path(path.join("/")) }
                   }
                 },
                 WikiDelete{path} => {
                   let p = path.join("/");
-                  // wiki_path.set(p.clone());
+                  wiki_path.set(p.clone());
                   let pp = p.clone();
                   let on_del_yes = move |_|{
                     let window = web_sys::window().expect("no global `window` exists");

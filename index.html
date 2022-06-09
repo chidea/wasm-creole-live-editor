@@ -45,6 +45,7 @@
             border: 1px solid;
             word-break: keep-all;
           }
+          /* repeated numbering for ordered list */
           ol > li {
               counter-increment: item;
           }
@@ -55,10 +56,13 @@
           ol ol > li {
               display: block;
           }
-
           ol ol > li:before {
               content: counters(item, ".") ". ";
               margin-left: -20px;
+          }
+
+          img {
+            max-width: 100%;
           }
           @media print {
             nav {

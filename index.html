@@ -41,7 +41,9 @@
             border-collapse: collapse;
           }
           td {
+            padding: .25rem;
             border: 1px solid;
+            word-break: keep-all;
           }
           ol > li {
               counter-increment: item;
@@ -57,6 +59,14 @@
           ol ol > li:before {
               content: counters(item, ".") ". ";
               margin-left: -20px;
+          }
+          @media print {
+            nav {
+              display: none;
+            }
+            h2.view-name {
+              display: none;
+            }
           }
         </style>
     </head>

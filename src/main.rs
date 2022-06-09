@@ -147,7 +147,7 @@ fn CreolePreview<'a, G: Html>(cx: Scope<'a>, props: CreolePreviewProps<'a>) -> V
 
     view! { cx,
       div(class="preview") {
-        h2 { "Preview" }
+        h2(class="view-name") { "Preview" }
         Indexed {
           iterable: parsed,
           view: |cx, x: ICreole| view! { cx, CreoleItem(x) }
@@ -313,7 +313,7 @@ fn CreoleEditor<'a, G: Html>(cx: Scope<'a>, props: CreoleEditorProps<'a>) -> Vie
 
     view! { cx,
       div(class="editor") {
-        h2 { "Editor" }
+        h2(class="view-name") { "Editor" }
         textarea(ref=node_ref, on:input=on_input) {
           (default_value)
         }

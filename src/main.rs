@@ -401,7 +401,7 @@ fn App<G: Html>(cx: Scope) -> View<G> {
                 },
                 Help => {
                   view! { cx,
-                    Creole { editable: false, path: String::from("help") }
+                    Creole { editable: true, path: String::from("help") }
                   }
                 },
                 Wiki{path} => {

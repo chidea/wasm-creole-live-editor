@@ -241,8 +241,7 @@ Force\\\\linebreak
 == image
 {{http://www.wikicreole.org/imageServlet?page=CheatSheet%2Fcreole_cheat_sheet.png&width=340}}
 
-{{https://www.w3schools.com/html/w3schools.jpg}}
-{{https://www.w3schools.com/html/w3schools.jpg|w3schools}}
+{{/icons/icon-64.png|WCLEW Logo}}
 ----
 == table
 |=|=table|=header|
@@ -303,7 +302,7 @@ fn CreoleEditor<'a, G: Html>(cx: Scope<'a>, props: CreoleEditorProps<'a>) -> Vie
                 // debug!("input : {}", s);
                 if s.is_empty() {
                     local_storage.remove_item(&props.path).unwrap_or(());
-                } else if !props.path.is_empty() &&  props.path != "help" {
+                } else if !props.path.is_empty() && props.path != "help" {
                     local_storage.set_item(&props.path, &s).unwrap_or(());
                 }
 

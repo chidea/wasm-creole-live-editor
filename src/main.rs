@@ -132,6 +132,7 @@ fn CreoleItem<'a, G: Html>(cx: Scope<'a>, i: ICreole<'a>) -> View<G> {
 #[derive(Prop)]
 struct CreolePreviewProps<'a> {
     value: &'a ReadSignal<Box<str>>,
+    show_title: bool,
     // parsed: &'a ReadSignal<Vec<ICreole<'a>>>,
     // value: Vec<ICreole<'a>>,
 }
@@ -155,7 +156,12 @@ fn CreolePreview<'a, G: Html>(cx: Scope<'a>, props: CreolePreviewProps<'a>) -> V
 
     view! { cx,
       div(class="preview") {
-        h2(class="view-name") { "Preview" }
+        ( if props.show_title {
+            view!{ cx, h2(class="view-name") { "Preview" } }
+          } else {
+            view!{ cx, } 
+          }
+        )
         Indexed {
           iterable: parsed,
           view: |cx, x: ICreole| view! { cx, CreoleItem(x) }
@@ -350,7 +356,7 @@ fn Creole<G: Html>(cx: Scope, props: CreoleProps) -> View<G> {
               value: value,
               path: props.path,
             }
-            CreolePreview{ value :value }
+            CreolePreview{ value :value, show_title: true }
           }
         }
     } else {
@@ -365,7 +371,7 @@ fn Creole<G: Html>(cx: Scope, props: CreoleProps) -> View<G> {
             .into_boxed_str(),
         );
         view! { cx,
-          CreolePreview{ value : value }
+          CreolePreview{ value : value, show_title: false }
         }
     }
 }

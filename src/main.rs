@@ -214,7 +214,7 @@ const HELP : &str = "= Help
 [[javascript:alert('hi')|alert me \"hi\"]]
 
 == internal links
-[[/|home]] = [[home]]
+[[home]]
 
 [[test]] : view wiki page named \"test\"
 

@@ -303,7 +303,7 @@ fn CreoleEditor<'a, G: Html>(cx: Scope<'a>, props: CreoleEditorProps<'a>) -> Vie
                 // debug!("input : {}", s);
                 if s.is_empty() {
                     local_storage.remove_item(&props.path).unwrap_or(());
-                } else if !props.path.is_empty() {
+                } else if !props.path.is_empty() &&  props.path != "help" {
                     local_storage.set_item(&props.path, &s).unwrap_or(());
                 }
 

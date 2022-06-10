@@ -33,11 +33,11 @@ impl Default for Theme {
 }
 
 fn open_local_storage() -> web_sys::Storage {
-  let window = web_sys::window().expect("no global `window` exists");
-  window
-      .local_storage()
-      .unwrap()
-      .expect("user has not enabled localStorage")
+    let window = web_sys::window().expect("no global `window` exists");
+    window
+        .local_storage()
+        .unwrap()
+        .expect("user has not enabled localStorage")
 }
 
 fn measure(perf: &web_sys::Performance, name: &str, s: &str, e: &str) {
@@ -257,13 +257,17 @@ Force\\\\linebreak
 ";
 #[component]
 fn CreoleEditor<'a, G: Html>(cx: Scope<'a>, props: CreoleEditorProps<'a>) -> View<G> {
+    let window = web_sys::window().expect("no global `window` exists");
+    let local_storage = window
+        .local_storage()
+        .unwrap()
+        .expect("user has not enabled localStorage");
     let node_ref = create_node_ref(cx);
 
     let last_update = create_signal(cx, 0.);
     let updated = create_signal(cx, false);
 
     let default_value = if !props.path.is_empty() {
-        let local_storage = open_local_storage();
         if let Ok(Some(v)) = local_storage.get_item(&props.path) {
             v
         } else if props.path == "help" {

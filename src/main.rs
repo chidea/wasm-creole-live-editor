@@ -32,6 +32,14 @@ impl Default for Theme {
     }
 }
 
+fn open_local_storage() -> web_sys::Storage {
+  let window = web_sys::window().expect("no global `window` exists");
+  window
+      .local_storage()
+      .unwrap()
+      .expect("user has not enabled localStorage")
+}
+
 fn measure(perf: &web_sys::Performance, name: &str, s: &str, e: &str) {
     if perf
         .measure_with_start_mark_and_end_mark(name, s, e)
@@ -69,8 +77,8 @@ fn creole_as_node<'a, G: Html>(cx: Scope<'a>, tag: &str, t: Vec<ICreole<'a>>) ->
 fn CreoleItem<'a, G: Html>(cx: Scope<'a>, i: ICreole<'a>) -> View<G> {
     match i {
         ICreole::Heading(l, t) => creole_as_node(cx, &format!("h{l}"), t),
-        ICreole::Bold(t) => view! { cx, strong { (format!("{t}")) } },
-        ICreole::Italic(t) => view! { cx, i { (format!("{t}")) } },
+        ICreole::Bold(children) => creole_as_node(cx, "b", children),
+        ICreole::Italic(children) => creole_as_node(cx, "i", children),
         ICreole::Text(t) => view! { cx, span { (format!("{t}")) } },
         ICreole::DontFormat(t) => view! { cx, pre { (format!("{t}"))  } },
         ICreole::Link(href, t) => {
@@ -161,18 +169,19 @@ struct CreoleEditorProps<'a> {
     // parsed: &'a Signal<Vec<ICreole<'a>>>,
     path: String,
 }
-const HELP : &str = "== [[https://webassembly.org|WASM]] [[http://www.wikicreole.org|Creole]] //Live// Editor ([[https://github.com/chidea/wasm-creole-live-editor|github]])
+const HELP : &str = "= Help
+== [[https://webassembly.org|WASM]] [[http://www.wikicreole.org|Creole]] //Live// Editor ([[https://github.com/chidea/wasm-creole-live-editor|github]])
 ----
-=== text styles
+== text styles
 //italic// and **bold**.
 ----
-=== bullet list
+== bullet list
 * a
 ** aa
 *** aaa
 * b
 ----
-=== numbered list
+== numbered list
 # 1
 ## 11
 ### 111
@@ -180,7 +189,7 @@ const HELP : &str = "== [[https://webassembly.org|WASM]] [[http://www.wikicreole
 ## 21
 ## 22
 ----
-=== mixed list
+== mixed list
 * a
 *# a1
 *# a2
@@ -194,26 +203,31 @@ const HELP : &str = "== [[https://webassembly.org|WASM]] [[http://www.wikicreole
 ##*# 11b2
 * a
 ----
-=== links
+== external links
 [[https://www.w3schools.com/]]
 
 [[https://webassembly.org]]
 
 [[http://www.wikicreole.org]]
 
+== script links
 [[javascript:alert('hi')|alert me \"hi\"]]
 
-[[/|reload to test autosave]]
+== internal links
+[[/|home]] = [[home]]
+
+[[test]] : view wiki page named \"test\"
+
 ----
-=== headings
-== h1
-=== h2
-==== h3
-===== h4
-====== h5
-======= h6
+== headings
+= h1
+== h2
+=== h3
+==== h4
+===== h5
+====== h6
 ----
-=== linebreaks
+== linebreaks
 No
 linebreak!
 
@@ -221,21 +235,21 @@ Use empty row
 
 Force\\\\linebreak
 ----
-=== Horizontal line
+== Horizontal line
 ----
 ----
-=== image
+== image
 {{http://www.wikicreole.org/imageServlet?page=CheatSheet%2Fcreole_cheat_sheet.png&width=340}}
 
 {{https://www.w3schools.com/html/w3schools.jpg}}
 {{https://www.w3schools.com/html/w3schools.jpg|w3schools}}
 ----
-=== table
+== table
 |=|=table|=header|
-|a|table|row|
+|a|{{{ // no wiki in table // }}}|row|
 |b|table|row|
 |c||empty cell|
-=== Don't format
+== Don't format
 {{{
 == [[Nowiki]]:
 //**don't** format//
@@ -244,19 +258,15 @@ Force\\\\linebreak
 #[component]
 fn CreoleEditor<'a, G: Html>(cx: Scope<'a>, props: CreoleEditorProps<'a>) -> View<G> {
     let node_ref = create_node_ref(cx);
-    let window = web_sys::window().expect("no global `window` exists");
-    let local_storage = window
-        .local_storage()
-        .unwrap()
-        .expect("user has not enabled localStorage");
 
     let last_update = create_signal(cx, 0.);
     let updated = create_signal(cx, false);
 
     let default_value = if !props.path.is_empty() {
+        let local_storage = open_local_storage();
         if let Ok(Some(v)) = local_storage.get_item(&props.path) {
             v
-        } else if props.path == "home" {
+        } else if props.path == "help" {
             // no user note for home page
             String::from(HELP)
         } else {
@@ -329,26 +339,8 @@ struct CreoleProps {
 
 #[component]
 fn Creole<G: Html>(cx: Scope, props: CreoleProps) -> View<G> {
-    let value = create_signal(
-        cx,
-        if props.path == "help" {
-            String::from(HELP)
-        } else {
-            let window = web_sys::window().expect("no global `window` exists");
-            let local_storage = window
-                .local_storage()
-                .unwrap()
-                .expect("user has not enabled localStorage");
-            if let Ok(Some(v)) = local_storage.get_item(&props.path) {
-                v
-            } else {
-                String::new()
-            }
-        }
-        .into_boxed_str(),
-    );
-
     if props.editable {
+        let value = create_signal(cx, String::new().into_boxed_str());
         view! { cx,
           div(class="wrapper") {
             CreoleEditor {
@@ -359,6 +351,16 @@ fn Creole<G: Html>(cx: Scope, props: CreoleProps) -> View<G> {
           }
         }
     } else {
+        let local_storage = open_local_storage();
+        let value = create_signal(
+            cx,
+            if let Ok(Some(v)) = local_storage.get_item(&props.path) {
+                v
+            } else {
+                String::new()
+            }
+            .into_boxed_str(),
+        );
         view! { cx,
           CreolePreview{ value : value }
         }

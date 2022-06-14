@@ -40,10 +40,22 @@
           table {
             border-collapse: collapse;
           }
+          thead {
+            background: #eee;
+          }
           td {
             padding: .25rem;
             border: 1px solid;
             word-break: keep-all;
+          }
+          pre {
+            display: inline;
+          }
+          div.preview > pre {
+            display: block;
+          }
+          ol, ul {
+            padding-inline-start: 1em;
           }
           /* repeated numbering for ordered list */
           ol > li {
@@ -103,8 +115,6 @@
               banner.style.display = 'flex';
             });
         </script> -->
-        <!-- <section id="creole-live-editor"></section>
-        <script src="/creole-live-editor.js" defer></script> -->
         <div id="root"></div>
     </body>
 </html>
